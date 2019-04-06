@@ -4,13 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kapa",
-  "license": "ISC",
-  "dependencies": {
-    "eris": "^0.9.0",
-    "mtgsdk": "^0.4.2",
-    "pg": "^7.9.0"
-  }
+  "license": "ISC"
 }
