@@ -1,0 +1,16 @@
+{
+  "name": "better-pipes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "Kapa",
+  "license": "ISC",
+  "dependencies": {
+    "eris": "^0.9.0",
+    "mtgsdk": "^0.4.2",
+    "pg": "^7.9.0"
+  }
+}
