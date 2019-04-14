@@ -7,5 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kapa",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "eris": "^0.9.0",
+    "node-fetch": "^2.3.0",
+    "pg": "^7.9.0",
+    "xmlhttprequest": "^1.8.0"
+  }
 }
