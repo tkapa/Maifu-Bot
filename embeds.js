@@ -74,6 +74,7 @@ function NameGuess(c) {
   return embed;
 }
 
+//Embed a card that has been claimed by someone
 function ClaimedCard(c) {
   var embed = {
     embed: {
@@ -113,6 +114,7 @@ function ClaimedCard(c) {
 
   return embed;
 }
+
 module.exports = {
   Card,
   NameGuess,
