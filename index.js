@@ -14,6 +14,7 @@ var cards = [];
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
   db.EstablishConnection();
+  db.Testing();
 });
 
 //
@@ -24,8 +25,8 @@ bot.registerCommand("rand", (msg, args) =>{
     .catch(e => console.log(e));
   },
   {
-    description: "A random card from the void",
-    fullDescription: "A random card from the void"
+    description: "A random card from the void.",
+    fullDescription: "A random card from the void."
   }
 );
 
@@ -41,19 +42,18 @@ bot.registerCommand("spawn", (msg, args)=>{
     .catch(e => console.log(e));
   },
   {
-    description: "This is a secret command",
+    description: "This is a secret command.",
     requirements: {
       userIDs: ["142548196089004032"]
     }
   }
 );
 
-//
+//Claims a spawned card as users
 bot.registerCommand("claim", (msg, args)=>{
-  var id = msg.channel.id;
-  
-  
+  var id = msg.channel.id; 
   console.log(args);
+
   for (var i = 0; i <= cards.length - 1; i++) {
     if (cards[i][0] === id) {
       if (cards[i][1].toLowerCase() === args.join(" ").toLowerCase()) {
@@ -74,9 +74,19 @@ bot.registerCommand("claim", (msg, args)=>{
   }
   },
   {
-    description: "This is a secret command",
+    description: "Claims the most recent spawned card provided you get the name right.",
   }
 );
+
+bot.registerCommand("profile", (msg, args) =>{
+  db.CheckGold(msg.author.id)
+    .then(g =>{
+      console.log(g);
+    });
+},
+{
+  description: "Shows you your current profile"
+});
 
 //Stores a card in a local 2D array to be collected later
 //Replaces any unclaimed cards
