@@ -14,11 +14,10 @@ var cards = [];
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
   db.EstablishConnection();
-  db.Testing();
 });
 
 //
-bot.registerCommand("rand", (msg, args) =>{
+bot.registerCommand("rand", (msg) =>{
   mtg
     .RandomCard()
     .then(c => bot.createMessage(msg.channel.id, embd.Card(c)))
@@ -31,7 +30,7 @@ bot.registerCommand("rand", (msg, args) =>{
 );
 
 //Command forces a card to spawn
-bot.registerCommand("spawn", (msg, args)=>{
+bot.registerCommand("spawn", (msg)=>{
   mtg
     .RandomCard()
     .then(c => {
@@ -74,18 +73,30 @@ bot.registerCommand("claim", (msg, args)=>{
   }
   },
   {
-    description: "Claims the most recent spawned card provided you get the name right.",
+    description: "Claims the most recent spawned card  in a channel provided you get the name right.",
   }
 );
 
-bot.registerCommand("profile", (msg, args) =>{
-  db.CheckGold(msg.author.id)
+//Intended to show users their current profile
+bot.registerCommand("profile", (msg) =>{
+  db.CheckAndReturnProfile(msg.author.id)
     .then(g =>{
+      console.table(g);
+    });
+},
+{
+  description: "Shows you your current profile."
+});
+
+//A command that can be used daily
+bot.registerCommand("daily", (msg)=>{
+  db.AlterGold(msg.author.id, Math.round(Math.random()*100))
+    .then(g=>{
       console.log(g);
     });
 },
 {
-  description: "Shows you your current profile"
+  description: "Shows you your current gold."
 });
 
 //Stores a card in a local 2D array to be collected later
