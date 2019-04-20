@@ -1,5 +1,6 @@
 const auth = require('./auth.json');
 const {Client} = require('pg');
+const dbName = "maifu_users_2019_4_17"
 const client = new Client({
   user:"postgres",
   password: auth[0].dbPass,
@@ -7,11 +8,21 @@ const client = new Client({
   port:5432,
   database: "testing_database"
 });
+const timeOffset = 0;
 
+
+//Establishes a connection to the database
+function EstablishConnection(){
+  client.connect()
+    .catch(e=>console.log(e));
+}
+
+
+///All of the Queries used in maifu
 //Pulls all user data rows from the database
 function ProfileQuery(userID){
   var query = {
-    text: "SELECT * FROM maifu_users_2019_4_17 WHERE discord_id = $1",
+    text: `SELECT * FROM ${dbName} WHERE discord_id = $1`,
     values: [userID]
   };
 
@@ -21,7 +32,7 @@ function ProfileQuery(userID){
 //Inserts a user into the database
 function InsertProfile(userID){
   var query = {
-    text: "INSERT INTO maifu_users_2019_4_17(discord_id) VALUES ($1)",
+    text: `INSERT INTO ${dbName}(discord_id) VALUES ($1)`,
     values: [userID]
   };
 
@@ -29,39 +40,53 @@ function InsertProfile(userID){
 }
 
 //Updates the user's gold
-function UpdateGold(userID, value){
+function UpdateGold(userID, value, nextTime){
   var query = {
-    text: "UPDATE maifu_users_2019_4_17 SET gold = gold + $1 WHERE discord_id = $2",
-    values: [value, userID]
+    text: `UPDATE ${dbName} SET gold = gold + $1, last_daily = $3 WHERE discord_id = $2`,
+    values: [value, userID, nextTime]
   };
 
   return query;
 }
 
-//maifu_users_2019_4_17
-//Establishes a connection to the database
-function EstablishConnection(){
-  client.connect()
-    .then(()=> console.log('Connected Successfully!'))
-    .catch(e=>console.log(e));
+
+
+//Function checks whether or not the user can execute the daily
+async function CheckLastDaily(userID, currentTime){
+  var lastTime = await client.query(`SELECT last_daily FROM ${dbName} WHERE discord_id = $1`, [userID])
+    .catch(e=>console.log("Something fucked up"));
+
+  if(lastTime.rows[0].last_daily < currentTime){
+    return true;
+  } else{
+    return false;
+  }
 }
 
+
+//This can return a user's entire row if needed
 async function CheckAndReturnProfile(userID){
   await client.query(InsertProfile(userID))
+    .catch(e=>console.log("User Already Present"));
   var p = await client.query(ProfileQuery(userID))
     .catch(e=>console.log(e));
   return p.rows;
 }
 
 async function AlterGold(userID, amount){
-  //await client.query(InsertProfile(userID))
-  var g = await client.query(UpdateGold(userID, amount))
+  await client.query(InsertProfile(userID))
+    .catch(e=>console.log("User Already Present"));
+    
+  await client.query(UpdateGold(userID, amount, Date.now() + timeOffset))
     .catch(e=>console.log(e));
-  return g;  
+  var g = await client.query(ProfileQuery(userID))
+    .catch(e=>console.log(e));
+  return g.rows[0].gold;  
 }
 
 module.exports = {
   EstablishConnection,
   CheckAndReturnProfile,
-  AlterGold
+  AlterGold,
+  CheckLastDaily
 };

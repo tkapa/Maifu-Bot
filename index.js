@@ -90,14 +90,43 @@ bot.registerCommand("profile", (msg) =>{
 
 //A command that can be used daily
 bot.registerCommand("daily", (msg)=>{
-  db.AlterGold(msg.author.id, Math.round(Math.random()*100))
-    .then(g=>{
-      console.log(g);
-    });
+  var addedAmount = 0;
+  var jackpot = Math.random();//Math.random();
+
+  if(jackpot >= 0.99999){
+    bot.createMessage("373486308427038720", `Bro <@${msg.author.id}> hit the jackpot`)
+    addedAmount = Math.round(Math.random() *100000)
+  } else {
+    addedAmount = Math.round(Math.random()*100+10);
+  }
+  
+  db.CheckLastDaily(msg.author.id, Date.now())
+    .then(r=>{
+      if(r){
+        db.AlterGold(msg.author.id, addedAmount)
+          .then(g=>{
+          bot.createMessage(msg.channel.id,
+            `Nice, you picked up ${addedAmount} gold! You now have ${g} gold. Come back tomorrow for some more.`);
+        });
+      } else {
+        bot.createMessage(msg.channel.id, "You cannot do this right now");
+      }
+  }); 
 },
 {
   description: "Shows you your current gold."
 });
+
+//used to test functionality
+bot.registerCommand("test", (msg, args)=>{
+     
+},
+{
+  description: "Used exclusively for testing functions",
+  requirements: {
+    userIDs: ["142548196089004032"]
+  }
+})
 
 //Stores a card in a local 2D array to be collected later
 //Replaces any unclaimed cards
