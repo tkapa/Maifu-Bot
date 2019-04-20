@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 
 //Draws a random card
 async function RandomCard(){
-  var c = fetch('https://api.scryfall.com/cards/random')
+  var c = fetch('https://api.scryfall.com/cards/random?pretty=true')
     .then(handle);
 
   return await c;

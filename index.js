@@ -39,14 +39,13 @@ bot.registerCommand("spawn", (msg)=>{
       console.log(c.name);
     })
     .catch(e => console.log(e));
-  },
-  {
+},
+{
     description: "This is a secret command.",
     requirements: {
       userIDs: ["142548196089004032"]
     }
-  }
-);
+});
 
 //Claims a spawned card as users
 bot.registerCommand("claim", (msg, args)=>{
@@ -71,11 +70,10 @@ bot.registerCommand("claim", (msg, args)=>{
       bot.createMessage(id, "No cards to be claimed on this channel.");
     }
   }
-  },
-  {
+},
+{
     description: "Claims the most recent spawned card  in a channel provided you get the name right.",
-  }
-);
+});
 
 //Intended to show users their current profile
 bot.registerCommand("profile", (msg) =>{
