@@ -15,19 +15,6 @@ var cards = [];
 bot.on("ready", () => {
 });
 
-//
-bot.registerCommand("rand", (msg) =>{
-  mtg
-    .RandomCard()
-    .then(c => bot.createMessage(msg.channel.id, embd.Card(c)))
-    .catch(e => console.log(e));
-  },
-  {
-    description: "A random card from the void.",
-    fullDescription: "A random card from the void."
-  }
-);
-
 //Command forces a card to spawn
 bot.registerCommand("spawn", (msg)=>{
   mtg
@@ -35,6 +22,7 @@ bot.registerCommand("spawn", (msg)=>{
     .then(c => {
       bot.createMessage(msg.channel.id, embd.NameGuess(c));
       StoreCard(msg.channel.id, c.name, c.uri);
+      database.RegisterCard(c.id);
       console.log(c.name);
     })
     .catch(e => console.log(e));
@@ -116,7 +104,6 @@ bot.registerCommand("test", (msg, args)=>{
 //Stores a card in a local 2D array to be collected later
 //Replaces any unclaimed cards
 function StoreCard(id, name, uri) {
-  
   if (cards.length > 0){
     for(var i = 0; i >=cards.length-1; i++) {
       if(cards[i][0] === id){

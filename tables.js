@@ -47,6 +47,15 @@ function SelectUser(value){
   return query;
 }
 
+function InsertCard(value){
+  let query = {
+    text: `INSERT INTO ${cardDb}(card_id) VALUES ($1)`,
+    values: [value]
+  };
+
+  return query;
+}
+
 //Checks if a value is already in a table
 async function CheckUserExistence(value){ 
   try{
@@ -54,7 +63,6 @@ async function CheckUserExistence(value){
     await client.query(InsertUser(value))
     await client.query("COMMIT");
   } catch(e){
-    console.log("User Exists");
     await client.query("ROLLBACK");
   }
 }
@@ -82,7 +90,6 @@ async function PerformDaily(userID, amount, time){
     
     //Checks if user has done this recently
     if(p.rows[0].last_daily <= time){
-      console.log("can do daily");
       await client.query(`UPDATE ${userDb} SET gold = gold + $1, last_daily = $2 WHERE discord_id = $3`, [amount, (time + timeOffset), userID]);
       await client.query("COMMIT");
       await client.query(SelectUser(userID))
@@ -98,7 +105,20 @@ async function PerformDaily(userID, amount, time){
   return m;
 }
 
+async function RegisterCard(cardID){
+  try{
+    await client.query("BEGIN");
+    await client.query(InsertCard(cardID))
+    await client.query("COMMIT");
+    console.log("Register Success");
+  } catch(e){
+    console.log("Card Exists");
+    await client.query("ROLLBACK");
+  }
+}
+
 module.exports = {
   GetProfile,
-  PerformDaily
+  PerformDaily,
+  RegisterCard
 }
