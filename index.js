@@ -1,5 +1,5 @@
 const auth = require("./auth.json");
-const db = require("./database.js");
+const database = require("./tables.js");
 const embd = require("./embeds.js");
 const mtg = require("./scryfall.js");
 const Eris = require("eris");
@@ -13,7 +13,6 @@ var cards = [];
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
-  db.EstablishConnection();
 });
 
 //
@@ -77,10 +76,8 @@ bot.registerCommand("claim", (msg, args)=>{
 
 //Intended to show users their current profile
 bot.registerCommand("profile", (msg) =>{
-  db.CheckAndReturnProfile(msg.author.id)
-    .then(g =>{
-      console.table(g);
-    });
+  database.GetProfile(msg.author.id)
+    .then(g=>console.table(g.rows))
 },
 {
   description: "Shows you your current profile."
@@ -97,19 +94,9 @@ bot.registerCommand("daily", (msg)=>{
   } else {
     addedAmount = Math.round(Math.random()*100+10);
   }
-  
-  db.CheckLastDaily(msg.author.id, Date.now())
-    .then(r=>{
-      if(r){
-        db.AlterGold(msg.author.id, addedAmount)
-          .then(g=>{
-          bot.createMessage(msg.channel.id,
-            `Nice, you picked up ${addedAmount} gold! You now have ${g} gold. Come back tomorrow for some more.`);
-        });
-      } else {
-        bot.createMessage(msg.channel.id, "You cannot do this right now");
-      }
-  }); 
+
+  database.PerformDaily(msg.author.id, addedAmount, Date.now())
+    .then(m=>bot.createMessage(msg.channel.id, m));
 },
 {
   description: "Shows you your current gold."

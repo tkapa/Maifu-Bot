@@ -75,8 +75,7 @@ async function CheckAndReturnProfile(userID){
 
 async function AlterGold(userID, amount){
   await client.query(InsertProfile(userID))
-    .catch(e=>console.log("User Already Present"));
-    
+    .catch(e=>console.log("User Already Present"));    
   await client.query(UpdateGold(userID, amount, Date.now() + timeOffset))
     .catch(e=>console.log(e));
   var g = await client.query(ProfileQuery(userID))
@@ -84,9 +83,14 @@ async function AlterGold(userID, amount){
   return g.rows[0].gold;  
 }
 
+function AddCard(userID, cardName, cardUri){
+
+}
+
 module.exports = {
   EstablishConnection,
   CheckAndReturnProfile,
   AlterGold,
-  CheckLastDaily
+  CheckLastDaily,
+  AddCard
 };
