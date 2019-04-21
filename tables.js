@@ -105,16 +105,8 @@ async function PerformDaily(userID, amount, time){
   return m;
 }
 
-async function RegisterCard(cardID){
-  try{
-    await client.query("BEGIN");
-    await client.query(InsertCard(cardID))
-    await client.query("COMMIT");
-    console.log("Register Success");
-  } catch(e){
-    console.log("Card Exists");
-    await client.query("ROLLBACK");
-  }
+function RegisterCard(cardID){
+  client.query(InsertCard(cardID));
 }
 
 module.exports = {

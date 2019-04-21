@@ -105,14 +105,19 @@ bot.registerCommand("test", (msg, args)=>{
 //Replaces any unclaimed cards
 function StoreCard(id, name, uri) {
   if (cards.length > 0){
-    for(var i = 0; i >=cards.length-1; i++) {
-      if(cards[i][0] === id){
+    for(var i = 0; i <= cards.length-1; i++) {
+      if(cards[i].id === id){
         cards.splice(i,1);
       }
     }
   }
-  var newCard = [id, name, uri];
+  var newCard = {
+    id: id,
+    name: name
+  };
+
   cards.push(newCard);
+  console.log(cards[0]);
 }
 
 bot.connect();
