@@ -187,14 +187,14 @@ async function ClaimConfirm(userID, channelID, cardID){
     await client.query("BEGIN");
     await client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
     await client.query(`INSERT INTO ${userInv}(user_id, card_id) VALUES ($1, $2)`, [userID, cardID]);
-    await client.query("COMMIT");
+    client.query("COMMIT");
     
     let c = null;
     await mtg.FetchCard(cardID)
       .then(r => c = r);
     return embd.ClaimedCard(c);
   } catch(e){
-    await client.query("ROLLBACK");
+    client.query("ROLLBACK");
     console.log(e);
   }
 }

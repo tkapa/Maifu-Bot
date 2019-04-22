@@ -1,5 +1,6 @@
 /*
-  THIS DISCORD
+  THIS DISCORD BOT IS NOT ASSOCIATED WITH 
+  WIZARDS OF THE COAST OR MAGIC: THE GATHERING IN ANY WAY
 */
 const auth = require("./auth.json");
 const database = require("./tables.js");
