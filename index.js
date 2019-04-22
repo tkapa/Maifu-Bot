@@ -1,3 +1,6 @@
+/*
+  THIS DISCORD
+*/
 const auth = require("./auth.json");
 const database = require("./tables.js");
 const embd = require("./embeds.js");

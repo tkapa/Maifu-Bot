@@ -11,7 +11,7 @@ async function RandomCard(){
 }
 
 async function FetchCard(id){
-  var c = fetch(uri)
+  var c = fetch(`https://api.scryfall.com/cards/${id}`)
     .then(handle);
 
   return await c;

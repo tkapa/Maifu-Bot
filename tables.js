@@ -1,4 +1,6 @@
 const auth = require('./auth.json');
+const embd = require('./embeds.js');
+const mtg = require('./scryfall.js');
 const {Pool} = require('pg');
 
 const pool = new Pool({
@@ -168,17 +170,33 @@ async function ClaimSpawnedCard(userID, channelID, args){
   if(c.rowCount === 0)
     return `No cards in ${channelID}`;
   else 
-    return CheckClaim(args);
+    return CheckClaim(c, userID, channelID, args);
 }
 
 //Checks a claim to make sure the name is correct
-function CheckClaim(args){
-  if(c.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()){
-    //TODO PUT CLAIM IN HERE
-    client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
-    return `Card on ${channelID} claimed`; 
+async function CheckClaim(card, userID, channelID, args){
+  if(card.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()){
+    return await ClaimConfirm(userID, channelID, card.rows[0].card_id)
   }else
     return `Wrong name`;
+}
+
+//If claim confirms, deletes entry from spawned table and adds it to user inventory table
+async function ClaimConfirm(userID, channelID, cardID){
+  try{
+    await client.query("BEGIN");
+    await client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
+    await client.query(`INSERT INTO ${userInv}(user_id, card_id) VALUES ($1, $2)`, [userID, cardID]);
+    await client.query("COMMIT");
+    
+    let c = null;
+    await mtg.FetchCard(cardID)
+      .then(r => c = r);
+    return embd.ClaimedCard(c);
+  } catch(e){
+    await client.query("ROLLBACK");
+    console.log(e);
+  }
 }
 
 module.exports = {
