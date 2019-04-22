@@ -24,35 +24,63 @@ pool.on('error', (err, client) => {
 const userDb = "maifu_users_2019_4_17";
 const userInv = "user_inventory";
 const cardDb = "cards";
+const spawnDb = "spawned_cards";
 
 //A number to offset the daily commands by, temporary for easy testing
 const timeOffset = 10000;
 
 //COMMON QUERIES I USE A LOT
 //Inserting a user into the database
-function InsertUser(value){
-  var query = {
+function InsertUser(userID){
+  let query = {
     text: `INSERT INTO ${userDb}(discord_id) VALUES ($1)`,
-    values: [value]
+    values: [userID]
   };
   return query;  
 }
 
 //Selecting rows from a table
-function SelectUser(value){
-  var query = {
+function SelectUser(userID){
+  let query = {
     text: `SELECT * FROM ${userDb} WHERE discord_id = $1`,
-    values: [value]
-  }
+    values: [userID]
+  };
   return query;
 }
 
-function InsertCard(value){
+//Inserts a card into the quick reference
+function InsertCard(cardID){
   let query = {
     text: `INSERT INTO ${cardDb}(card_id) VALUES ($1)`,
-    values: [value]
+    values: [cardID]
   };
 
+  return query;
+}
+
+//Inserts a spawned card to await spawning
+function InsertSpawnedCard(channelID, cardName, cardID){
+  let query = {
+    text: `INSERT INTO ${spawnDb}(channel_id, card_name, card_id) VALUES ($1, $2, $3)`,
+    values: [channelID, cardName, cardID]
+  };
+  return query;
+}
+
+//Updates the spawned card on the db
+function UpdateSpawnedCard(channelID, cardName, cardID){
+  let query = {
+    text: `UPDATE ${spawnDb} SET card_name = $1, card_id = $2 WHERE channel_id = $3`,
+    values: [cardName, cardID, channelID]
+  };
+  return query;
+}
+
+function FetchSpawnedCard(channelID){
+  let query = {
+    text: `SELECT card_name, card_id FROM ${spawnDb} WHERE channel_id = $1`,
+    values: [channelID]
+  };
   return query;
 }
 
@@ -105,12 +133,58 @@ async function PerformDaily(userID, amount, time){
   return m;
 }
 
-function RegisterCard(cardID){
-  client.query(InsertCard(cardID));
+//Registers a card that spawns
+async function RegisterCard(cardID){
+  try{
+    await client.query("BEGIN");
+    await client.query(InsertCard(cardID));
+    await client.query("COMMIT");
+  } catch(e){
+    await client.query("ROLLBACK");
+  }
+}
+
+//Adds a card to the spawned table
+async function SpawnCard(channelID, cardName, cardID){
+  console.log(cardName);
+  await RegisterCard(cardID);
+
+  try{
+    await client.query("BEGIN");
+    await client.query(InsertSpawnedCard(channelID, cardName, cardID));
+    await client.query("COMMIT");
+  } catch(e){
+    await client.query("ROLLBACK");
+    await client.query(UpdateSpawnedCard(channelID, cardName, cardID));
+  }
+}
+
+//Checks a user exists and that a card is spawned in the channel
+async function ClaimSpawnedCard(userID, channelID, args){
+  await CheckUserExistence(userID);
+
+  c = await client.query(FetchSpawnedCard(channelID));
+ 
+  if(c.rowCount === 0)
+    return `No cards in ${channelID}`;
+  else 
+    return CheckClaim(args);
+}
+
+//Checks a claim to make sure the name is correct
+function CheckClaim(args){
+  if(c.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()){
+    //TODO PUT CLAIM IN HERE
+    client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
+    return `Card on ${channelID} claimed`; 
+  }else
+    return `Wrong name`;
 }
 
 module.exports = {
   GetProfile,
   PerformDaily,
-  RegisterCard
+  RegisterCard,
+  SpawnCard,
+  ClaimSpawnedCard
 }

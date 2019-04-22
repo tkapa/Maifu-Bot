@@ -21,9 +21,7 @@ bot.registerCommand("spawn", (msg)=>{
     .RandomCard()
     .then(c => {
       bot.createMessage(msg.channel.id, embd.NameGuess(c));
-      StoreCard(msg.channel.id, c.name, c.uri);
-      database.RegisterCard(c.id);
-      console.log(c.name);
+      database.SpawnCard(msg.channel.id, c.name, c.id);
     })
     .catch(e => console.log(e));
 },
@@ -36,27 +34,11 @@ bot.registerCommand("spawn", (msg)=>{
 
 //Claims a spawned card as users
 bot.registerCommand("claim", (msg, args)=>{
-  var id = msg.channel.id; 
+  let id = msg.channel.id; 
   console.log(args);
 
-  for (var i = 0; i <= cards.length - 1; i++) {
-    if (cards[i][0] === id) {
-      if (cards[i][1].toLowerCase() === args.join(" ").toLowerCase()) {
-        //Confirm Claim
-        mtg
-          .FetchCard(cards[i][2])
-          .then(c => bot.createMessage(id, embd.ClaimedCard(c)));
-        
-        cards.splice(i, 1);
-      } else {
-        //Wrong card name
-        bot.createMessage(id, "Card Name is Incorrect! Try again.")
-      }
-    } else {
-      //No cards on the channel
-      bot.createMessage(id, "No cards to be claimed on this channel.");
-    }
-  }
+  database.ClaimSpawnedCard(msg.author.id, id, args)
+    .then(r => bot.createMessage(id, r));
 },
 {
     description: "Claims the most recent spawned card  in a channel provided you get the name right.",
@@ -100,24 +82,5 @@ bot.registerCommand("test", (msg, args)=>{
     userIDs: ["142548196089004032"]
   }
 })
-
-//Stores a card in a local 2D array to be collected later
-//Replaces any unclaimed cards
-function StoreCard(id, name, uri) {
-  if (cards.length > 0){
-    for(var i = 0; i <= cards.length-1; i++) {
-      if(cards[i].id === id){
-        cards.splice(i,1);
-      }
-    }
-  }
-  var newCard = {
-    id: id,
-    name: name
-  };
-
-  cards.push(newCard);
-  console.log(cards[0]);
-}
 
 bot.connect();

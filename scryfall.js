@@ -10,7 +10,7 @@ async function RandomCard(){
   return await c;
 }
 
-async function FetchCard(uri){
+async function FetchCard(id){
   var c = fetch(uri)
     .then(handle);
 
