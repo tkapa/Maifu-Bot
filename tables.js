@@ -78,10 +78,20 @@ function UpdateSpawnedCard(channelID, cardName, cardID){
   return query;
 }
 
+//Gets a spawned card from the spawn db
 function FetchSpawnedCard(channelID){
   let query = {
     text: `SELECT card_name, card_id FROM ${spawnDb} WHERE channel_id = $1`,
     values: [channelID]
+  };
+  return query;
+}
+
+//Retrieve the user's inventory from the inventory
+function FetchUserInventory(userID){
+  let query = {
+    text: `SELECT * FROM ${userInv} WHERE user_id = $1`,
+    values: [userID]
   };
   return query;
 }
@@ -101,7 +111,7 @@ async function CheckUserExistence(value){
 async function GetProfile(userID){
   await CheckUserExistence(userID);
 
-  var p = await client.query(SelectUser(userID))
+  var p = await client.query(FetchUserInventory(userID))
     .catch(e=> console.log(e));
 
   return p;
@@ -176,23 +186,24 @@ async function ClaimSpawnedCard(userID, channelID, args){
 //Checks a claim to make sure the name is correct
 async function CheckClaim(card, userID, channelID, args){
   if(card.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()){
-    return await ClaimConfirm(userID, channelID, card.rows[0].card_id)
+    //MOVE THIS TO SOMEWHERE IT WOEN'T TAKE SO LONG
+    ClaimConfirm(userID, channelID, card.rows[0].card_id, card.rows[0].card_name);
+
+    let c = null;
+    await mtg.FetchCard(card.rows[0].card_id)
+      .then(r => c = r);
+    return embd.ClaimedCard(c); 
   }else
     return `Wrong name`;
 }
 
 //If claim confirms, deletes entry from spawned table and adds it to user inventory table
-async function ClaimConfirm(userID, channelID, cardID){
+async function ClaimConfirm(userID, channelID, cardID, cardName){
   try{
     await client.query("BEGIN");
     await client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
-    await client.query(`INSERT INTO ${userInv}(user_id, card_id) VALUES ($1, $2)`, [userID, cardID]);
+    await client.query(`INSERT INTO ${userInv}(user_id, card_id, card_name) VALUES ($1, $2, $3)`, [userID, cardID, cardName]);
     client.query("COMMIT");
-    
-    let c = null;
-    await mtg.FetchCard(cardID)
-      .then(r => c = r);
-    return embd.ClaimedCard(c);
   } catch(e){
     client.query("ROLLBACK");
     console.log(e);

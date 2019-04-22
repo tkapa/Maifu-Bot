@@ -65,7 +65,7 @@ function NameGuess(c) {
         },
         {
           name: "Image not showing?",
-          value: `Card image available [here](${c.image_uris.border_crop})`
+          value: `Card image available [here](${c.image_uris.art_crop})`
         }
       ]
     }

@@ -10,6 +10,7 @@ async function RandomCard(){
   return await c;
 }
 
+//Fetches a card by ID
 async function FetchCard(id){
   var c = fetch(`https://api.scryfall.com/cards/${id}`)
     .then(handle);
