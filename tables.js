@@ -96,13 +96,15 @@ async function CheckUserExistence(value){
 
 //Retrieves the Profile of a user
 async function GetProfile(msg){
-  await SetSpawningChannel(msg.channel.guild.id, msg.channel.id, false);
+  SetSpawningChannel(msg.channel.guild.id, msg.channel.id, false);
   await CheckUserExistence(msg.author.id);
 
-  var p = await client.query(FetchUserInventory(msg.author.id))
+  var cardCount = await client.query(FetchUserInventory(msg.author.id))
     .catch(e=> console.log(e));
 
-  return p;
+  var goldCount = await client.query(SelectUser(msg.author.id));
+
+  return embd.ProfileEmbed(msg.author, cardCount.rows, goldCount.rows[0].gold);
 }
 
 //Checks a user and updates their gold

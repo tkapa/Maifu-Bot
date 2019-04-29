@@ -60,7 +60,7 @@ bot.registerCommand("claim", (msg, args)=>{
 //Intended to show users their current profile
 bot.registerCommand("profile", (msg) =>{
   database.GetProfile(msg)
-    .then(g=>console.table(g.rows))
+    .then(r=>bot.createMessage(msg.channel.id, r));
 },
 {
   description: "Shows you your current profile."

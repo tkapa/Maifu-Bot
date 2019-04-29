@@ -1,11 +1,10 @@
 //Generic Embed, Presents Card
 function Card(c) {
-  var embed = {
+  let embed = {
     embed: {
       title: c.name,
       url: c.scryfall_uri,
       color: 111111,
-      timestamp: "2019-04-14T10:39:38.772Z",
       image: {
         url: c.image_uris.border_crop
       },
@@ -41,11 +40,10 @@ function Card(c) {
 
 //Embed that shows only art, set and artist
 function NameGuess(c) {
-  var embed = {
+  let embed = {
     embed: {
       url: c.scryfall_uri,
       color: 111111,
-      timestamp: "2019-04-14T10:39:38.772Z",
       image: {
         url: c.image_uris.art_crop
       },
@@ -76,12 +74,11 @@ function NameGuess(c) {
 
 //Embed a card that has been claimed by someone
 function ClaimedCard(c) {
-  var embed = {
+  let embed = {
     embed: {
       title: c.name,
       url: c.scryfall_uri,
       color: 111111,
-      timestamp: "2019-04-14T10:39:38.772Z",
       image: {
         url: c.image_uris.border_crop
       },
@@ -115,8 +112,32 @@ function ClaimedCard(c) {
   return embed;
 }
 
+function ProfileEmbed(p, cards, gold){
+  let embed = {
+    embed:{
+      title: `${p.username}'s Profile`,
+      thumbnail: {
+        url: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`
+      },
+      fields: [
+        {
+          name: `Total Cards`,
+          value: `${cards.length}`,
+          inline: true
+        },
+        {
+          name: `Gold`,
+          value: `${gold}`,
+          inline: true
+        }
+      ]
+    }
+  }
+  return embed;
+}
 module.exports = {
   Card,
   NameGuess,
-  ClaimedCard
+  ClaimedCard,
+  ProfileEmbed
 };
