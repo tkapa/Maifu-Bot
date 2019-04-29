@@ -35,13 +35,9 @@ bot.on("messageCreate", (msg)=>{
 
 //Command forces a card to spawn
 bot.registerCommand("spawn", (msg)=>{
-  mtg
-    .RandomCard()
-    .then(c => {
-      database.SpawnCard(msg.channel.guild.id, msg.channel.id, c.name, c.id, Date.now());
-      bot.createMessage(msg.channel.id, embd.NameGuess(c));      
-    })
-    .catch(e => console.log(e));
+  database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
+    .then(r=>bot.createMessage(r.channel, r.message))
+    .catch(e=>console.log(e));
 },
 {
     description: "This is a secret command.",
@@ -93,7 +89,8 @@ bot.registerCommand("daily", (msg)=>{
 });
 
 bot.registerCommand("setspawnchannel", (msg)=>{
- database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true);
+  database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true);
+  bot.createMessage(msg.channel.id, `Spawn channel now set to <#${msg.channel.id}>`);
 },
 {
   description: "Sets this guild's spawn channel"

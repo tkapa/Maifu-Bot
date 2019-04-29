@@ -145,12 +145,12 @@ async function SetSpawningChannel(guildID, channelID, settingChannel){
     await client.query("BEGIN");
     await client.query(`INSERT INTO ${spawnDb}(guild_id, channel_id, last_spawn) VALUES ($1, $2, 0)`, [guildID, channelID]);
     client.query("COMMIT");
-    console.log("Guild successfully inserted");
+    console.log(`New guild spawn channel created`);
   } catch(e){
     await client.query("ROLLBACK");
     if(settingChannel){
       client.query(`UPDATE ${spawnDb} SET channel_id = $1 WHERE guild_id = $2`, [channelID, guildID]);
-      console.log(`Updated spawning channel for ${guildID}`);
+      console.log(`Guild spawn set to ${channelID}`);
     }
   }
 }
