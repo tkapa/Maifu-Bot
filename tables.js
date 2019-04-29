@@ -12,14 +12,13 @@ const pool = new Pool({
 });
 
 let client = null;
-pool.on('error', (err, client) => {
+pool.on('error', (err) => {
   console.error('Unexpected error', err);
-  process.exit(-1)
+  process.exit(-1);
 });
 
 (async() => {
   client = await pool.connect();
-  const res = await client.query('SELECT NOW()');
 })().catch(e => console.log(e.stack));
 
 //Database Names so I don't have to type em every time
@@ -27,9 +26,6 @@ const userDb = "maifu_users_2019_4_17";
 const userInv = "user_inventory";
 const cardDb = "cards";
 const spawnDb = "spawned_cards";
-
-//A number to offset the daily commands by, temporary for easy testing
-const timeOffset = 10000;
 
 //COMMON QUERIES I USE A LOT
 //Inserting a user into the database
@@ -61,28 +57,19 @@ function InsertCard(cardID){
 }
 
 //Inserts a spawned card to await spawning
-function InsertSpawnedCard(channelID, cardName, cardID){
+function UpdateSpawnedCard(guildID, cardName, cardID, time){
   let query = {
-    text: `INSERT INTO ${spawnDb}(channel_id, card_name, card_id) VALUES ($1, $2, $3)`,
-    values: [channelID, cardName, cardID]
-  };
-  return query;
-}
-
-//Updates the spawned card on the db
-function UpdateSpawnedCard(channelID, cardName, cardID){
-  let query = {
-    text: `UPDATE ${spawnDb} SET card_name = $1, card_id = $2 WHERE channel_id = $3`,
-    values: [cardName, cardID, channelID]
+    text: `UPDATE ${spawnDb} SET card_name = $1, card_id = $2, last_spawn = $3 WHERE guild_id = $4`,
+    values: [cardName, cardID, time, guildID]
   };
   return query;
 }
 
 //Gets a spawned card from the spawn db
-function FetchSpawnedCard(channelID){
+function FetchSpawnedCard(guildID){
   let query = {
-    text: `SELECT card_name, card_id FROM ${spawnDb} WHERE channel_id = $1`,
-    values: [channelID]
+    text: `SELECT card_name, card_id FROM ${spawnDb} WHERE guild_id = $1`,
+    values: [guildID]
   };
   return query;
 }
@@ -90,7 +77,7 @@ function FetchSpawnedCard(channelID){
 //Retrieve the user's inventory from the inventory
 function FetchUserInventory(userID){
   let query = {
-    text: `SELECT * FROM ${userInv} WHERE user_id = $1`,
+    text: `SELECT card_id, card_name FROM ${userInv} WHERE user_id = $1`,
     values: [userID]
   };
   return query;
@@ -108,39 +95,35 @@ async function CheckUserExistence(value){
 }
 
 //Retrieves the Profile of a user
-async function GetProfile(userID){
-  await CheckUserExistence(userID);
+async function GetProfile(msg){
+  await SetSpawningChannel(msg.channel.guild.id, msg.channel.id, false);
+  await CheckUserExistence(msg.author.id);
 
-  var p = await client.query(FetchUserInventory(userID))
+  var p = await client.query(FetchUserInventory(msg.author.id))
     .catch(e=> console.log(e));
 
   return p;
 }
 
 //Checks a user and updates their gold
-async function PerformDaily(userID, amount, time){
+async function Daily(msg, userID, amount){
+  await SetSpawningChannel(msg.channel.guild.id, msg.channel.id, false);
   await CheckUserExistence(userID);
   
   let m = null;
-  let p = null;
 
   try{
     await client.query("BEGIN");
-    p = await client.query(SelectUser(userID));
-    
-    //Checks if user has done this recently
-    if(p.rows[0].last_daily <= time){
-      await client.query(`UPDATE ${userDb} SET gold = gold + $1, last_daily = $2 WHERE discord_id = $3`, [amount, (time + timeOffset), userID]);
-      await client.query("COMMIT");
-      await client.query(SelectUser(userID))
-        .then(r =>{
-          m = `Nice, you got ${amount} gold! You now have ${r.rows[0].gold} gold, come back tomorrow for more.`;
-        });
-    } else {
-      m = "You cannot do that right now.";
-    }
+    await client.query(`UPDATE ${userDb} SET gold = gold + $1 WHERE discord_id = $2`, [amount, userID]);
+    await client.query(SelectUser(userID))
+      .then(r =>{
+        m = `Nice, you got ${amount} gold! You now have ${r.rows[0].gold} gold, come back tomorrow for more.`;
+      })
+      .catch(e=> console.log(e));
+    await client.query("COMMIT");
   } catch(e){
-    await Client.query("ROLLBACK");
+    await client.query("ROLLBACK");
+    m = `Something fucked up.`;
   }
   return m;
 }
@@ -156,38 +139,46 @@ async function RegisterCard(cardID){
   }
 }
 
-//Adds a card to the spawned table
-async function SpawnCard(channelID, cardName, cardID){
-  console.log(cardName);
-  await RegisterCard(cardID);
-
+//Intended to be used to set the spawning channel for a guild
+async function SetSpawningChannel(guildID, channelID, settingChannel){
   try{
     await client.query("BEGIN");
-    await client.query(InsertSpawnedCard(channelID, cardName, cardID));
-    await client.query("COMMIT");
+    await client.query(`INSERT INTO ${spawnDb}(guild_id, channel_id, last_spawn) VALUES ($1, $2, 0)`, [guildID, channelID]);
+    client.query("COMMIT");
+    console.log("Guild successfully inserted");
   } catch(e){
     await client.query("ROLLBACK");
-    await client.query(UpdateSpawnedCard(channelID, cardName, cardID));
+    if(settingChannel){
+      client.query(`UPDATE ${spawnDb} SET channel_id = $1 WHERE guild_id = $2`, [channelID, guildID]);
+      console.log(`Updated spawning channel for ${guildID}`);
+    }
   }
 }
 
+//Adds a card to the spawned table
+async function SpawnCard(guildID, cardName, cardID, time){
+  console.log(cardName);
+  await RegisterCard(cardID);
+  client.query(UpdateSpawnedCard(guildID, cardName, cardID, time));
+}
+
 //Checks a user exists and that a card is spawned in the channel
-async function ClaimSpawnedCard(userID, channelID, args){
+async function ClaimSpawnedCard(userID, guildID, channelID, args){
+  await SetSpawningChannel(guildID, channelID, false);
   await CheckUserExistence(userID);
 
-  c = await client.query(FetchSpawnedCard(channelID));
- 
-  if(c.rowCount === 0)
-    return `No cards in ${channelID}`;
+  c = await client.query(FetchSpawnedCard(guildID));
+
+  if(c.rows[0].card_id === null)
+    return `No spawned cards in this channel`;
   else 
-    return CheckClaim(c, userID, channelID, args);
+    return CheckClaim(c, userID, guildID, args);
 }
 
 //Checks a claim to make sure the name is correct
-async function CheckClaim(card, userID, channelID, args){
+async function CheckClaim(card, userID, guildID, args){
   if(card.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()){
-    //MOVE THIS TO SOMEWHERE IT WOEN'T TAKE SO LONG
-    ClaimConfirm(userID, channelID, card.rows[0].card_id, card.rows[0].card_name);
+    ClaimConfirm(userID, guildID, card.rows[0].card_id, card.rows[0].card_name);
 
     let c = null;
     await mtg.FetchCard(card.rows[0].card_id)
@@ -198,10 +189,10 @@ async function CheckClaim(card, userID, channelID, args){
 }
 
 //If claim confirms, deletes entry from spawned table and adds it to user inventory table
-async function ClaimConfirm(userID, channelID, cardID, cardName){
+async function ClaimConfirm(userID, guildID, cardID, cardName){
   try{
     await client.query("BEGIN");
-    await client.query(`DELETE FROM ${spawnDb} WHERE channel_id = $1`, [channelID]);
+    await client.query(`UPDATE ${spawnDb} SET card_id = null, card_name = null WHERE guild_id = $1`, [guildID]);
     await client.query(`INSERT INTO ${userInv}(user_id, card_id, card_name) VALUES ($1, $2, $3)`, [userID, cardID, cardName]);
     client.query("COMMIT");
   } catch(e){
@@ -212,8 +203,9 @@ async function ClaimConfirm(userID, channelID, cardID, cardName){
 
 module.exports = {
   GetProfile,
-  PerformDaily,
   RegisterCard,
   SpawnCard,
-  ClaimSpawnedCard
+  ClaimSpawnedCard,
+  Daily,
+  SetSpawningChannel
 }

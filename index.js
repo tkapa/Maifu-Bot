@@ -13,7 +13,8 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
   prefix: "m."
 });
 
-var cards = [];
+//A default time offset for daily time commands
+let timeOffset = 10000;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
@@ -25,7 +26,7 @@ bot.registerCommand("spawn", (msg)=>{
     .RandomCard()
     .then(c => {
       bot.createMessage(msg.channel.id, embd.NameGuess(c));
-      database.SpawnCard(msg.channel.id, c.name, c.id);
+      database.SpawnCard(msg.channel.guild.id, c.name, c.id, Date.now());
     })
     .catch(e => console.log(e));
 },
@@ -38,11 +39,10 @@ bot.registerCommand("spawn", (msg)=>{
 
 //Claims a spawned card as users
 bot.registerCommand("claim", (msg, args)=>{
-  let id = msg.channel.id; 
   console.log(args);
 
-  database.ClaimSpawnedCard(msg.author.id, id, args)
-    .then(r => bot.createMessage(id, r));
+  database.ClaimSpawnedCard(msg.author.id, msg.channel.guild.id, msg.channel.id, args)
+    .then(r => bot.createMessage(msg.channel.id, r));
 },
 {
     description: "Claims the most recent spawned card  in a channel provided you get the name right.",
@@ -50,7 +50,7 @@ bot.registerCommand("claim", (msg, args)=>{
 
 //Intended to show users their current profile
 bot.registerCommand("profile", (msg) =>{
-  database.GetProfile(msg.author.id)
+  database.GetProfile(msg)
     .then(g=>console.table(g.rows))
 },
 {
@@ -59,8 +59,9 @@ bot.registerCommand("profile", (msg) =>{
 
 //A command that can be used daily
 bot.registerCommand("daily", (msg)=>{
+
   var addedAmount = 0;
-  var jackpot = Math.random();//Math.random();
+  var jackpot = Math.random();
 
   if(jackpot >= 0.99999){
     bot.createMessage("373486308427038720", `Bro <@${msg.author.id}> hit the jackpot`)
@@ -69,11 +70,20 @@ bot.registerCommand("daily", (msg)=>{
     addedAmount = Math.round(Math.random()*100+10);
   }
 
-  database.PerformDaily(msg.author.id, addedAmount, Date.now())
+  database.Daily(msg, msg.author.id, addedAmount)
     .then(m=>bot.createMessage(msg.channel.id, m));
 },
 {
-  description: "Shows you your current gold."
+  description: "Shows you your current gold.",
+  cooldown: 10000,
+  cooldownMessage: "You cannot do that right now."
+});
+
+bot.registerCommand("setspawnchannel", (msg)=>{
+ database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true);
+},
+{
+  description: "Sets this guild's spawn channel"
 });
 
 //used to test functionality
