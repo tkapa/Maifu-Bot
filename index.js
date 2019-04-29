@@ -15,7 +15,7 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
 
 //A default time offset for daily time commands
 let timeOffset = 10000;
-let spawnChance = 1;
+let spawnChance = 0.005;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
@@ -25,21 +25,12 @@ bot.on("ready", () => {
 bot.on("messageCreate", (msg)=>{
   if(msg.author.id != 286427596026019841){
     s = Math.random();
-    console.log(s);
     if(s <= spawnChance){
-      mtg
-        .RandomCard()
-        .then(c => {
-          database.SpawnCard(msg.channel.guild.id, msg.channel.id, c.name, c.id, Date.now()+timeOffset)
-            .then(channel =>bot.createMessage(channel, embd.NameGuess(c)))
-            .catch(e=>console.log(e));
-        })
-        .catch(e => console.log(e));
+      database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
+        .then(r=>bot.createMessage(r.channel, r.message))
+        .catch(e=>console.log(e));
     }
   }
-},
-{
-  ignoreSelf: true
 })
 
 //Command forces a card to spawn

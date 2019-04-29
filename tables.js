@@ -156,15 +156,16 @@ async function SetSpawningChannel(guildID, channelID, settingChannel){
 }
 
 //Adds a card to the spawned table
-async function SpawnCard(guildID, channelID, cardName, cardID, time){
+async function SpawnCard(guildID, channelID, time){
+  await SetSpawningChannel(guildID, channelID, false);
   let spawnChannel = await client.query(`SELECT channel_id, last_spawn FROM ${spawnDb} WHERE guild_id = $1`, [guildID]);
   
-  if(spawnChannel.rows[0].last_spawn >= Date.now()){
-    console.log(cardName);
-    await SetSpawningChannel(guildID, channelID, false);
-    await RegisterCard(cardID);
-    client.query(UpdateSpawnedCard(guildID, cardName, cardID, time));
-    return spawnChannel.rows[0].channel_id;
+  if(spawnChannel.rows[0].last_spawn <= Date.now()){
+    c = await mtg.RandomCard();
+    console.log(c.name);
+    await RegisterCard(c.id);
+    client.query(UpdateSpawnedCard(guildID, c.name, c.id, time));
+    return { channel: spawnChannel.rows[0].channel_id,  message: embd.NameGuess(c)};
   } else{
     throw `Guild has had a card spawn too recently`;
   }  
