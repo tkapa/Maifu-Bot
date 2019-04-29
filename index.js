@@ -15,18 +15,40 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
 
 //A default time offset for daily time commands
 let timeOffset = 10000;
+let spawnChance = 1;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
 });
+
+//Decides whether or not to spawn a card in the spawning channel
+bot.on("messageCreate", (msg)=>{
+  if(msg.author.id != 286427596026019841){
+    s = Math.random();
+    console.log(s);
+    if(s <= spawnChance){
+      mtg
+        .RandomCard()
+        .then(c => {
+          database.SpawnCard(msg.channel.guild.id, msg.channel.id, c.name, c.id, Date.now()+timeOffset)
+            .then(channel =>bot.createMessage(channel, embd.NameGuess(c)))
+            .catch(e=>console.log(e));
+        })
+        .catch(e => console.log(e));
+    }
+  }
+},
+{
+  ignoreSelf: true
+})
 
 //Command forces a card to spawn
 bot.registerCommand("spawn", (msg)=>{
   mtg
     .RandomCard()
     .then(c => {
-      bot.createMessage(msg.channel.id, embd.NameGuess(c));
-      database.SpawnCard(msg.channel.guild.id, c.name, c.id, Date.now());
+      database.SpawnCard(msg.channel.guild.id, msg.channel.id, c.name, c.id, Date.now());
+      bot.createMessage(msg.channel.id, embd.NameGuess(c));      
     })
     .catch(e => console.log(e));
 },

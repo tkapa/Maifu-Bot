@@ -156,10 +156,18 @@ async function SetSpawningChannel(guildID, channelID, settingChannel){
 }
 
 //Adds a card to the spawned table
-async function SpawnCard(guildID, cardName, cardID, time){
-  console.log(cardName);
-  await RegisterCard(cardID);
-  client.query(UpdateSpawnedCard(guildID, cardName, cardID, time));
+async function SpawnCard(guildID, channelID, cardName, cardID, time){
+  let spawnChannel = await client.query(`SELECT channel_id, last_spawn FROM ${spawnDb} WHERE guild_id = $1`, [guildID]);
+  
+  if(spawnChannel.rows[0].last_spawn >= Date.now()){
+    console.log(cardName);
+    await SetSpawningChannel(guildID, channelID, false);
+    await RegisterCard(cardID);
+    client.query(UpdateSpawnedCard(guildID, cardName, cardID, time));
+    return spawnChannel.rows[0].channel_id;
+  } else{
+    throw `Guild has had a card spawn too recently`;
+  }  
 }
 
 //Checks a user exists and that a card is spawned in the channel
