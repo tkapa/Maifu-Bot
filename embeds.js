@@ -112,9 +112,9 @@ function ClaimedCard(c) {
   return embed;
 }
 
-function ProfileEmbed(p, cards, gold){
+function ProfileEmbed(p, cards, gold) {
   let embed = {
-    embed:{
+    embed: {
       title: `${p.username}'s Profile`,
       thumbnail: {
         url: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`

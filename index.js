@@ -4,8 +4,6 @@
 */
 const auth = require("./auth.json");
 const database = require("./tables.js");
-const embd = require("./embeds.js");
-const mtg = require("./scryfall.js");
 const Eris = require("eris");
 const bot = new Eris.CommandClient(auth[0].token, {}, {
   description: "Budget Card Collecting",
@@ -22,89 +20,88 @@ bot.on("ready", () => {
 });
 
 //Decides whether or not to spawn a card in the spawning channel
-bot.on("messageCreate", (msg)=>{
-  if(msg.author.id != 286427596026019841){
+bot.on("messageCreate", (msg) => {
+  if (msg.author.id != 286427596026019841) {
     s = Math.random();
-    if(s <= spawnChance){
+    if (s <= spawnChance) {
       database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
-        .then(r=>bot.createMessage(r.channel, r.message))
-        .catch(e=>console.log(e));
+        .catch(e => console.log(e));
     }
   }
 })
 
 //Command forces a card to spawn
-bot.registerCommand("spawn", (msg)=>{
+bot.registerCommand("spawn", (msg) => {
   database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
-    .then(r=>bot.createMessage(r.channel, r.message))
-    .catch(e=>console.log(e));
+    .then(r => bot.createMessage(r.channel, r.message))
+    .catch(e => console.log(e));
 },
-{
+  {
     description: "This is a secret command.",
     requirements: {
       userIDs: ["142548196089004032"]
     }
-});
+  });
 
 //Claims a spawned card as users
-bot.registerCommand("claim", (msg, args)=>{
+bot.registerCommand("claim", (msg, args) => {
   console.log(args);
 
   database.ClaimSpawnedCard(msg.author.id, msg.channel.guild.id, msg.channel.id, args)
     .then(r => bot.createMessage(msg.channel.id, r));
 },
-{
+  {
     description: "Claims the most recent spawned card  in a channel provided you get the name right.",
-});
+  });
 
 //Intended to show users their current profile
-bot.registerCommand("profile", (msg) =>{
+bot.registerCommand("profile", (msg) => {
   database.GetProfile(msg)
-    .then(r=>bot.createMessage(msg.channel.id, r));
+    .then(r => bot.createMessage(msg.channel.id, r));
 },
-{
-  description: "Shows you your current profile."
-});
+  {
+    description: "Shows you your current profile."
+  });
 
 //A command that can be used daily
-bot.registerCommand("daily", (msg)=>{
+bot.registerCommand("daily", (msg) => {
 
   var addedAmount = 0;
   var jackpot = Math.random();
 
-  if(jackpot >= 0.99999){
+  if (jackpot >= 0.99999) {
     bot.createMessage("373486308427038720", `Bro <@${msg.author.id}> hit the jackpot`)
-    addedAmount = Math.round(Math.random() *100000)
+    addedAmount = Math.round(Math.random() * 100000)
   } else {
-    addedAmount = Math.round(Math.random()*100+10);
+    addedAmount = Math.round(Math.random() * 100 + 10);
   }
 
   database.Daily(msg, msg.author.id, addedAmount)
-    .then(m=>bot.createMessage(msg.channel.id, m));
+    .then(m => bot.createMessage(msg.channel.id, m));
 },
-{
-  description: "Shows you your current gold.",
-  cooldown: 10000,
-  cooldownMessage: "You cannot do that right now."
-});
+  {
+    description: "Shows you your current gold.",
+    cooldown: 10000,
+    cooldownMessage: "You cannot do that right now."
+  });
 
-bot.registerCommand("setspawnchannel", (msg)=>{
+bot.registerCommand("setspawnchannel", (msg) => {
   database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true);
   bot.createMessage(msg.channel.id, `Spawn channel now set to <#${msg.channel.id}>`);
 },
-{
-  description: "Sets this guild's spawn channel"
-});
+  {
+    description: "Sets this guild's spawn channel"
+  });
 
 //used to test functionality
-bot.registerCommand("test", (msg, args)=>{
-     
+bot.registerCommand("test", (msg, args) => {
+
 },
-{
-  description: "Used exclusively for testing functions",
-  requirements: {
-    userIDs: ["142548196089004032"]
-  }
-})
+  {
+    description: "Used exclusively for testing functions",
+    requirements: {
+      userIDs: ["142548196089004032"]
+    }
+  })
 
 bot.connect();
