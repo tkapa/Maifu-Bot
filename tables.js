@@ -118,25 +118,13 @@ async function Daily(msg, userID, amount) {
     await client.query(SelectUser(userID))
       .then(r => {
         m = `Nice, you got ${amount} gold! You now have ${r.rows[0].gold} gold, come back tomorrow for more.`;
-      })
-      .catch(e => console.log(e));
+      });
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
     m = `Something fucked up.`;
   }
   return m;
-}
-
-//Registers a card that spawns
-async function RegisterCard(cardID) {
-  try {
-    await client.query("BEGIN");
-    await client.query(InsertCard(cardID));
-    await client.query("COMMIT");
-  } catch (e) {
-    await client.query("ROLLBACK");
-  }
 }
 
 //Intended to be used to set the spawning channel for a guild
@@ -208,7 +196,6 @@ async function ClaimConfirm(userID, guildID, cardID) {
 
 module.exports = {
   GetProfile,
-  RegisterCard,
   SpawnCard,
   ClaimSpawnedCard,
   Daily,

@@ -3,6 +3,7 @@ function Card(c) {
   let embed = {
     embed: {
       title: c.card_name,
+      url: c.card_uri,
       color: 111111,
       image: {
         url: c.card_images.border_crop
@@ -75,6 +76,7 @@ function ClaimedCard(c) {
   let embed = {
     embed: {
       title: c.card_name,
+      url: c.card_uri,
       color: 111111,
       image: {
         url: c.card_images.border_crop

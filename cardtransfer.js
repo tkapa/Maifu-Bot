@@ -34,7 +34,7 @@ function cardInsert(id, name, desc, set, artist, img){
     c = cards[i];
     try{
       await client.query("BEGIN");
-      await client.query(cardInsert(c.id, c.name, c.oracle_text,c.set_name, c.artist, c.image_uris));
+      await client.query(`UPDATE saved_cards SET card_uri = $1 WHERE card_id = $2`, [c.scryfall_uri, c.id]);
       client.query("COMMIT");
     } catch(e){
       client.query("ROLLBACK");
