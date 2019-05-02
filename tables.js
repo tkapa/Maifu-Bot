@@ -1,6 +1,5 @@
 const auth = require('./auth.json');
 const embd = require('./embeds.js');
-const mtg = require('./scryfall.js');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -25,7 +24,8 @@ pool.on('error', (err) => {
 const userDb = "maifu_users_2019_4_17";
 const userInv = "user_inventory";
 const cardDb = "cards";
-const spawnDb = "spawned_cards";
+const spawnDb = "spawned_cards"
+const saveDb = "saved_cards";
 
 //COMMON QUERIES I USE A LOT
 //Inserting a user into the database
@@ -68,7 +68,7 @@ function UpdateSpawnedCard(guildID, cardName, cardID, time) {
 //Gets a spawned card from the spawn db
 function FetchSpawnedCard(guildID) {
   let query = {
-    text: `SELECT card_name, card_id FROM ${spawnDb} WHERE guild_id = $1`,
+    text: `SELECT card_id FROM ${spawnDb} WHERE guild_id = $1`,
     values: [guildID]
   };
   return query;
@@ -77,7 +77,7 @@ function FetchSpawnedCard(guildID) {
 //Retrieve the user's inventory from the inventory
 function FetchUserInventory(userID) {
   let query = {
-    text: `SELECT card_id, card_name FROM ${userInv} WHERE user_id = $1`,
+    text: `SELECT card_id FROM ${userInv} WHERE user_id = $1`,
     values: [userID]
   };
   return query;
@@ -161,47 +161,44 @@ async function SpawnCard(guildID, channelID, time) {
   let spawnChannel = await client.query(`SELECT channel_id, last_spawn FROM ${spawnDb} WHERE guild_id = $1`, [guildID]);
 
   if (spawnChannel.rows[0].last_spawn <= Date.now()) {
-    c = await mtg.RandomCard();
-    console.log(c.name);
-    await RegisterCard(c.id);
-    client.query(UpdateSpawnedCard(guildID, c.name, c.id, time));
-    return { channel: spawnChannel.rows[0].channel_id, message: embd.NameGuess(c) };
+    c = await client.query(`SELECT * FROM ${saveDb} ORDER BY RANDOM() LIMIT 1`);
+    console.table(c.rows[0].card_name);
+    client.query(UpdateSpawnedCard(guildID, c.rows[0].card_name, c.rows[0].card_id, time));
+    return { channel: spawnChannel.rows[0].channel_id, message: embd.NameGuess(c.rows[0]) };
   } else {
     throw `Guild has had a card spawn too recently`;
   }
 }
 
 //Checks a user exists and that a card is spawned in the channel
-async function ClaimSpawnedCard(userID, guildID, channelID, args) {
+async function ClaimSpawnedCard(userID, guildID, args) {
   await CheckUserExistence(userID);
 
-  c = await client.query(FetchSpawnedCard(guildID));
+  cardID = await client.query(FetchSpawnedCard(guildID));
 
-  if (c.rows[0].card_id === null)
+  if (cardID.rows[0].card_id === null)
     return `No spawned cards in this channel`;
-  else
+  else{
+    c = await client.query(`SELECT * FROM ${saveDb} WHERE card_id = $1`, [cardID.rows[0].card_id]);
     return CheckClaim(c, userID, guildID, args);
+  }
 }
 
 //Checks a claim to make sure the name is correct
 async function CheckClaim(card, userID, guildID, args) {
   if (card.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()) {
-    ClaimConfirm(userID, guildID, card.rows[0].card_id, card.rows[0].card_name);
-
-    let c = null;
-    await mtg.FetchCard(card.rows[0].card_id)
-      .then(r => c = r);
-    return embd.ClaimedCard(c);
+    ClaimConfirm(userID, guildID, card.rows[0].card_id);
+    return embd.ClaimedCard(card.rows[0]);
   } else
     return `Wrong name`;
 }
 
 //If claim confirms, deletes entry from spawned table and adds it to user inventory table
-async function ClaimConfirm(userID, guildID, cardID, cardName) {
+async function ClaimConfirm(userID, guildID, cardID) {
   try {
     await client.query("BEGIN");
     await client.query(`UPDATE ${spawnDb} SET card_id = null, card_name = null WHERE guild_id = $1`, [guildID]);
-    await client.query(`INSERT INTO ${userInv}(user_id, card_id, card_name) VALUES ($1, $2, $3)`, [userID, cardID, cardName]);
+    await client.query(`INSERT INTO ${userInv}(user_id, card_id) VALUES ($1, $2)`, [userID, cardID]);
     client.query("COMMIT");
   } catch (e) {
     client.query("ROLLBACK");

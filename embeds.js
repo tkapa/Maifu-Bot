@@ -2,11 +2,10 @@
 function Card(c) {
   let embed = {
     embed: {
-      title: c.name,
-      url: c.scryfall_uri,
+      title: c.card_name,
       color: 111111,
       image: {
-        url: c.image_uris.border_crop
+        url: c.card_images.border_crop
       },
       author: {
         name: "New Card"
@@ -14,22 +13,22 @@ function Card(c) {
       fields: [
         {
           name: "Description",
-          value: c.oracle_text,
+          value: c.card_description,
           inline: true
         },
         {
           name: "Set",
-          value: c.set_name,
+          value: c.card_set,
           inline: true
         },
         {
           name: "Artist",
-          value: c.artist,
+          value: c.card_artist,
           inline: true
         },
         {
           name: "Image not showing?",
-          value: `Card image available [here](${c.image_uris.border_crop})`
+          value: `Card image available [here](${c.card_images.border_crop})`
         }
       ]
     }
@@ -42,10 +41,9 @@ function Card(c) {
 function NameGuess(c) {
   let embed = {
     embed: {
-      url: c.scryfall_uri,
       color: 111111,
       image: {
-        url: c.image_uris.art_crop
+        url: c.card_images.art_crop
       },
       author: {
         name: "Name the Card!"
@@ -53,17 +51,17 @@ function NameGuess(c) {
       fields: [
         {
           name: "Set",
-          value: c.set_name,
+          value: c.card_set,
           inline: true
         },
         {
           name: "Artist",
-          value: c.artist,
+          value: c.card_artist,
           inline: true
         },
         {
           name: "Image not showing?",
-          value: `Card image available [here](${c.image_uris.art_crop})`
+          value: `Card image available [here](${c.card_images.art_crop})`
         }
       ]
     }
@@ -76,11 +74,10 @@ function NameGuess(c) {
 function ClaimedCard(c) {
   let embed = {
     embed: {
-      title: c.name,
-      url: c.scryfall_uri,
+      title: c.card_name,
       color: 111111,
       image: {
-        url: c.image_uris.border_crop
+        url: c.card_images.border_crop
       },
       author: {
         name: "Card Claimed!"
@@ -88,22 +85,22 @@ function ClaimedCard(c) {
       fields: [
         {
           name: "Description",
-          value: c.oracle_text,
+          value: c.card_description,
           inline: true
         },
         {
           name: "Set",
-          value: c.set_name,
+          value: c.card_set,
           inline: true
         },
         {
           name: "Artist",
-          value: c.artist,
+          value: c.card_artist,
           inline: true
         },
         {
           name: "Image not showing?",
-          value: `Card image available [here](${c.image_uris.border_crop})`
+          value: `Card image available [here](${c.card_images.border_crop})`
         }
       ]
     }

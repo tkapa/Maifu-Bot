@@ -47,7 +47,7 @@ bot.registerCommand("spawn", (msg) => {
 bot.registerCommand("claim", (msg, args) => {
   console.log(args);
 
-  database.ClaimSpawnedCard(msg.author.id, msg.channel.guild.id, msg.channel.id, args)
+  database.ClaimSpawnedCard(msg.author.id, msg.channel.guild.id, args)
     .then(r => bot.createMessage(msg.channel.id, r));
 },
   {
