@@ -135,6 +135,7 @@ function ProfileEmbed(p, cards, gold) {
   }
   return embed;
 }
+
 module.exports = {
   Card,
   NameGuess,
