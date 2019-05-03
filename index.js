@@ -13,7 +13,7 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
 
 //A default time offset for daily time commands
 let timeOffset = 10000;
-let spawnChance = 0.005;
+let spawnChance = 0.01;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
@@ -86,19 +86,32 @@ bot.registerCommand("daily", (msg) => {
   });
 
 bot.registerCommand("setspawnchannel", (msg) => {
-  database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true);
-  bot.createMessage(msg.channel.id, `Spawn channel now set to <#${msg.channel.id}>`);
+  database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true)
+    .then(bot.createMessage(msg.channel.id, `Spawn channel now set to <#${msg.channel.id}>`));
 },
   {
-    description: "Sets this guild's spawn channel"
+    description: "Sets this guild's spawn channel.",
+    requirements:{
+      permissions:{
+        administrator: true
+      }
+    }
   });
+
+bot.registerCommand("list", (msg, args)=>{
+  database.ShowList(msg)
+    .then(r => bot.createMessage(msg.channel.id, r));
+},
+{
+  description: "Shows you a list of your cards."
+})
 
 //used to test functionality
 bot.registerCommand("test", (msg, args) => {
-
+  
 },
   {
-    description: "Used exclusively for testing functions",
+    description: "Used exclusively for testing functions.",
     requirements: {
       userIDs: ["142548196089004032"]
     }

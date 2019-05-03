@@ -23,19 +23,8 @@ pool.on('error', (err) => {
 //Database Names so I don't have to type em every time
 const userDb = "maifu_users_2019_4_17";
 const userInv = "user_inventory";
-const cardDb = "cards";
 const spawnDb = "spawned_cards"
 const saveDb = "saved_cards";
-
-//COMMON QUERIES I USE A LOT
-//Inserting a user into the database
-function InsertUser(userID) {
-  let query = {
-    text: `INSERT INTO ${userDb}(discord_id) VALUES ($1)`,
-    values: [userID]
-  };
-  return query;
-}
 
 //Selecting rows from a table
 function SelectUser(userID) {
@@ -43,16 +32,6 @@ function SelectUser(userID) {
     text: `SELECT * FROM ${userDb} WHERE discord_id = $1`,
     values: [userID]
   };
-  return query;
-}
-
-//Inserts a card into the quick reference
-function InsertCard(cardID) {
-  let query = {
-    text: `INSERT INTO ${cardDb}(card_id) VALUES ($1)`,
-    values: [cardID]
-  };
-
   return query;
 }
 
@@ -65,29 +44,11 @@ function UpdateSpawnedCard(guildID, cardName, cardID, time) {
   return query;
 }
 
-//Gets a spawned card from the spawn db
-function FetchSpawnedCard(guildID) {
-  let query = {
-    text: `SELECT card_id FROM ${spawnDb} WHERE guild_id = $1`,
-    values: [guildID]
-  };
-  return query;
-}
-
-//Retrieve the user's inventory from the inventory
-function FetchUserInventory(userID) {
-  let query = {
-    text: `SELECT card_id FROM ${userInv} WHERE user_id = $1`,
-    values: [userID]
-  };
-  return query;
-}
-
 //Checks if a value is already in a table
-async function CheckUserExistence(value) {
+async function CheckUserExistence(userID) {
   try {
     await client.query("BEGIN");
-    await client.query(InsertUser(value))
+    await client.query(`INSERT INTO ${userDb}(discord_id) VALUES ($1)`, [userID])
     await client.query("COMMIT");
   } catch (e) {
     await client.query("ROLLBACK");
@@ -98,12 +59,12 @@ async function CheckUserExistence(value) {
 async function GetProfile(msg) {
   await CheckUserExistence(msg.author.id);
 
-  var cardCount = await client.query(FetchUserInventory(msg.author.id))
+  var cardCount = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [userID])
     .catch(e => console.log(e));
 
-  var goldCount = await client.query(SelectUser(msg.author.id));
+  var profile = await client.query(SelectUser(msg.author.id));
 
-  return embd.ProfileEmbed(msg.author, cardCount.rows, goldCount.rows[0].gold);
+  return embd.ProfileEmbed(msg.author, cardCount.rows, profile.rows[0].gold);
 }
 
 //Checks a user and updates their gold
@@ -133,7 +94,6 @@ async function SetSpawningChannel(guildID, channelID, settingChannel) {
     await client.query("BEGIN");
     await client.query(`INSERT INTO ${spawnDb}(guild_id, channel_id, last_spawn) VALUES ($1, $2, 0)`, [guildID, channelID]);
     client.query("COMMIT");
-    console.log(`New guild spawn channel created`);
   } catch (e) {
     await client.query("ROLLBACK");
     if (settingChannel) {
@@ -162,7 +122,7 @@ async function SpawnCard(guildID, channelID, time) {
 async function ClaimSpawnedCard(userID, guildID, args) {
   await CheckUserExistence(userID);
 
-  cardID = await client.query(FetchSpawnedCard(guildID));
+  cardID = await client.query(`SELECT card_id FROM ${spawnDb} WHERE guild_id = $1`, [guildID]);
 
   if (cardID.rows[0].card_id === null)
     return `No spawned cards in this channel`;
@@ -194,10 +154,30 @@ async function ClaimConfirm(userID, guildID, cardID) {
   }
 }
 
+async function ShowList(msg){
+  await CheckUserExistence(msg.author.id);
+
+  idList = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [msg.author.id]);
+
+  let cardList = [];
+  let temp = null;
+  
+  if(idList.rowCount == 0){
+    return `You have no cards`
+  } else{
+    for(i = 0; i <= 10; ++i){
+      temp = await client.query(`SELECT card_name FROM ${saveDb} WHERE card_id = $1`, [idList.rows[i].card_id]);
+      cardList.push(temp.rows[0].card_name);
+    }
+    return embd.ListEmbed(msg.author, cardList);
+  }
+}
+
 module.exports = {
   GetProfile,
   SpawnCard,
   ClaimSpawnedCard,
   Daily,
-  SetSpawningChannel
+  SetSpawningChannel,
+  ShowList
 }

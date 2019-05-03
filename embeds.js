@@ -135,9 +135,29 @@ function ProfileEmbed(p, cards, gold) {
   return embed;
 }
 
+function ListEmbed(p, cardList){
+  let temp = ``;
+  for(i=0; i<=9; ++i){
+    if(i == 0){
+      temp = `${i} | ${cardList[i]}`;
+    } else {
+      temp = temp.concat("\n", `${i} | ${cardList[i]}`);
+    }
+  }
+  console.log(temp);
+  let embed = {
+    embed:{
+      title: `${p.username}'s Cards`,
+      description: temp
+    }
+  }
+  return embed;
+}
+
 module.exports = {
   Card,
   NameGuess,
   ClaimedCard,
-  ProfileEmbed
+  ProfileEmbed,
+  ListEmbed
 };
