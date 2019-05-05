@@ -135,9 +135,20 @@ function ProfileEmbed(p, cards, gold) {
   return embed;
 }
 
-function ListEmbed(p, cardList){
+function ListEmbed(p, cardList, page, pageSize){
   let temp = ``;
-  for(i=0; i<=9; ++i){
+
+  let min = 0;
+  if((page-1)*pageSize > 0)
+    min = (page-1)*pageSize;
+  
+  let max = pageSize;
+  if(page*pageSize > max)
+    max = page*pageSize;
+  if(max >= cardList.length)
+    max = cardList.length;
+
+  for(i=min; i<=max-1; ++i){
     if(i == 0){
       temp = `${i} | ${cardList[i]}`;
     } else {
@@ -148,7 +159,10 @@ function ListEmbed(p, cardList){
   let embed = {
     embed:{
       title: `${p.username}'s Cards`,
-      description: temp
+      description: temp,
+      footer : {
+        text: `This is page ${page} of ${Math.round(cardList.length/pageSize)}`
+      }
     }
   }
   return embed;

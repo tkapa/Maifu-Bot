@@ -99,7 +99,7 @@ bot.registerCommand("setspawnchannel", (msg) => {
   });
 
 bot.registerCommand("list", (msg, args)=>{
-  database.ShowList(msg)
+  database.ShowList(msg, args)
     .then(r => bot.createMessage(msg.channel.id, r));
 },
 {

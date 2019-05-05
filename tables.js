@@ -26,6 +26,8 @@ const userInv = "user_inventory";
 const spawnDb = "spawned_cards"
 const saveDb = "saved_cards";
 
+const pageSize = 10;
+
 //Selecting rows from a table
 function SelectUser(userID) {
   let query = {
@@ -154,7 +156,7 @@ async function ClaimConfirm(userID, guildID, cardID) {
   }
 }
 
-async function ShowList(msg){
+async function ShowList(msg, page){
   await CheckUserExistence(msg.author.id);
 
   idList = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [msg.author.id]);
@@ -162,14 +164,20 @@ async function ShowList(msg){
   let cardList = [];
   let temp = null;
   
+  if(page == "")
+    page = 1;
+
   if(idList.rowCount == 0){
-    return `You have no cards`
-  } else{
-    for(i = 0; i <= 10; ++i){
+    return `You have no cards`;
+  } else if((page-1)*pageSize >= idList.rowCount){
+    return `You don't have that many pages`
+  }else{
+    for(i = 0; i <= idList.rowCount - 1; ++i){
       temp = await client.query(`SELECT card_name FROM ${saveDb} WHERE card_id = $1`, [idList.rows[i].card_id]);
       cardList.push(temp.rows[0].card_name);
     }
-    return embd.ListEmbed(msg.author, cardList);
+    console.log(cardList.length);
+    return embd.ListEmbed(msg.author, cardList, page, pageSize);
   }
 }
 
