@@ -61,16 +61,22 @@ async function CheckUserExistence(userID) {
 async function GetProfile(msg) {
   await CheckUserExistence(msg.author.id);
 
-  var cardCount = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [userID])
+  var cardCount = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [msg.author.id])
     .catch(e => console.log(e));
 
   var profile = await client.query(SelectUser(msg.author.id));
+  var fav = null;  
 
-  return embd.ProfileEmbed(msg.author, cardCount.rows, profile.rows[0].gold);
+  if(profile.rows[0].favourite_card != null){
+    await client.query(`SELECT * FROM ${saveDb} WHERE card_id = $1`, [profile.rows[0].favourite_card])  
+    .then(r => fav = r);
+  }
+
+  return embd.ProfileEmbed(msg.author, cardCount.rows, profile.rows[0].gold, fav);
 }
 
 //Checks a user and updates their gold
-async function Daily(msg, userID, amount) {
+async function Daily(userID, amount) {
   await CheckUserExistence(userID);
 
   let m = null;
@@ -156,6 +162,7 @@ async function ClaimConfirm(userID, guildID, cardID) {
   }
 }
 
+//Retrieves the user's list of cards and displays them
 async function ShowList(msg, page){
   await CheckUserExistence(msg.author.id);
 
@@ -181,11 +188,54 @@ async function ShowList(msg, page){
   }
 }
 
+//Set favourite card
+async function SetFavourite(userID, args){
+  await CheckUserExistence(userID);
+
+  let cards = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [userID]);
+  
+  if(cards.rowCount == 0){
+    return `You have no cards to favourite.`;
+  } else if(args > cards.rowCount-1){
+    return `You don't have that many cards.`;
+  } else {
+    let n = await client.query(`SELECT card_name FROM ${saveDb} WHERE card_id = $1`, [cards.rows[args].card_id]);
+    client.query(`UPDATE ${userDb} SET favourite_card = $1 WHERE discord_id = $2`, [cards.rows[args].card_id, userID]);
+
+    return `Your favourite card has been set to ${n.rows[0].card_name}!`;
+  }
+
+
+}
+
+//Remove a card from the user's database
+async function RemoveCard(userID, args){
+  await CheckUserExistence(userID);
+
+  let profile = await client.query(SelectUser(userID));
+  let cards = await client.query(`SELECT * FROM ${userInv} WHERE user_id = $1`, [userID]);
+
+  if(cards.rowCount == 0)
+    return `You have no cards to remove.`;
+  else if(args > (cards.rowCount - 1)){
+    return `You don't have that many cards.`;
+  } else {
+    if(profile.rows[0].favourite_card == cards.rows[args].card_id){
+      client.query(`UPDATE ${userDb} SET favourite_card = null WHERE discord_id = $1`, [userID]);
+    }
+    let removedCard = await client.query(`SELECT card_name FROM ${saveDb} WHERE card_id = $1`, [cards.rows[args].card_id]);
+    client.query(`DELETE FROM ${userInv} WHERE user_id = $1 AND card_id = $2`, [userID, cards.rows[args].card_id]);
+    return `Removed ${removedCard.rows[0].card_name} from your inventory!`;
+  }
+}
+
 module.exports = {
   GetProfile,
   SpawnCard,
   ClaimSpawnedCard,
   Daily,
   SetSpawningChannel,
-  ShowList
+  ShowList,
+  SetFavourite,
+  RemoveCard
 }

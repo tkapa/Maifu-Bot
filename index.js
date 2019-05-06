@@ -76,7 +76,7 @@ bot.registerCommand("daily", (msg) => {
     addedAmount = Math.round(Math.random() * 100 + 10);
   }
 
-  database.Daily(msg, msg.author.id, addedAmount)
+  database.Daily(msg.author.id, addedAmount)
     .then(m => bot.createMessage(msg.channel.id, m));
 },
   {
@@ -104,6 +104,24 @@ bot.registerCommand("list", (msg, args)=>{
 },
 {
   description: "Shows you a list of your cards."
+})
+
+bot.registerCommand("favourite", (msg, args)=>{
+  database.SetFavourite(msg.author.id, args)
+    .then(r=> bot.createMessage(msg.channel.id, r));
+},
+{
+  argsRequired: true,
+  description: `Favourites a card at the index specified.`
+})
+
+bot.registerCommand("remove", (msg, args)=>{
+  database.RemoveCard(msg.author.id, args)
+    .then(r=> bot.createMessage(msg.channel.id, r));
+},
+{
+  argsRequired: true,
+  description: `Removes a card at the index specified.`
 })
 
 //used to test functionality

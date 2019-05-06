@@ -111,10 +111,21 @@ function ClaimedCard(c) {
   return embed;
 }
 
-function ProfileEmbed(p, cards, gold) {
+function ProfileEmbed(p, cards, gold, fav) {
+  let favourite = `No favourited cards`;
+  let card_image = null;
+
+  if(fav != null){
+    favourite = fav.rows[0].card_name;
+    card_image = fav.rows[0].card_images.border_crop;
+  }
+
   let embed = {
     embed: {
       title: `${p.username}'s Profile`,
+      image:{
+        url: card_image
+      },
       thumbnail: {
         url: `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png`
       },
@@ -127,6 +138,11 @@ function ProfileEmbed(p, cards, gold) {
         {
           name: `Gold`,
           value: `${gold}`,
+          inline: true
+        },
+        {
+          name: `Favourite Card`,
+          value: `${favourite}`,
           inline: true
         }
       ]
