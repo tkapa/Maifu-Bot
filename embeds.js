@@ -72,7 +72,7 @@ function NameGuess(c) {
 }
 
 //Embed a card that has been claimed by someone
-function ClaimedCard(c) {
+function ClaimedCard(c, userID) {
   let embed = {
     embed: {
       title: c.card_name,
@@ -82,7 +82,7 @@ function ClaimedCard(c) {
         url: c.card_images.border_crop
       },
       author: {
-        name: "Card Claimed!"
+        name: `Card Claimed!`
       },
       fields: [
         {
@@ -102,7 +102,13 @@ function ClaimedCard(c) {
         },
         {
           name: "Image not showing?",
-          value: `Card image available [here](${c.card_images.border_crop})`
+          value: `Card image available [here](${c.card_images.border_crop})`,
+          inline: true
+        },
+        {
+          name: "Card Claimed By:",
+          value: `<@${userID}>`,
+          inline: true
         }
       ]
     }
@@ -171,13 +177,13 @@ function ListEmbed(p, cardList, page, pageSize){
       temp = temp.concat("\n", `${i} | ${cardList[i]}`);
     }
   }
-  console.log(temp);
+
   let embed = {
     embed:{
       title: `${p.username}'s Cards`,
       description: temp,
       footer : {
-        text: `This is page ${page} of ${Math.round(cardList.length/pageSize)}`
+        text: `This is page ${page} of ${Math.ceil(cardList.length/pageSize)}`
       }
     }
   }

@@ -80,11 +80,22 @@ bot.registerCommand("daily", (msg) => {
     .then(m => bot.createMessage(msg.channel.id, m));
 },
   {
-    description: "Shows you your current gold.",
+    description: "Grants you some gold to save or spend.",
     cooldown: 10000,
     cooldownMessage: "You cannot do that right now."
   });
 
+bot.registerCommand("dailydraw", (msg)=>{
+  database.Draw(msg.author.id)
+    .then(r => bot.createMessage(msg.channel.id, r));
+},
+{
+  description: "Draws a card from the aether for you.",
+  cooldown: 10000,
+  cooldownMessage: "You cannot do that right now."
+})
+
+//Sets the spawn channel for the guild to the message's channel
 bot.registerCommand("setspawnchannel", (msg) => {
   database.SetSpawningChannel(msg.channel.guild.id, msg.channel.id, true)
     .then(bot.createMessage(msg.channel.id, `Spawn channel now set to <#${msg.channel.id}>`));

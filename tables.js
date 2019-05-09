@@ -96,6 +96,22 @@ async function Daily(userID, amount) {
   return m;
 }
 
+//Draws a new card for the user
+async function Draw(userID){
+  await CheckUserExistence(userID);
+  try{
+    await client.query(`BEGIN`);
+    let c = await client.query(`SELECT * FROM ${saveDb} ORDER BY RANDOM() LIMIT 1`);
+    await client.query(`INSERT INTO ${userInv}(user_id, card_id) VALUES ($1, $2)`, [userID, c.rows[0].card_id]);
+    client.query("COMMIT");
+    
+    return embd.ClaimedCard(c.rows[0], userID);
+  } catch (e) {
+    client.query("ROLLBACK");
+    console.log(e);
+  }
+}
+
 //Intended to be used to set the spawning channel for a guild
 async function SetSpawningChannel(guildID, channelID, settingChannel) {
   try {
@@ -144,7 +160,7 @@ async function ClaimSpawnedCard(userID, guildID, args) {
 async function CheckClaim(card, userID, guildID, args) {
   if (card.rows[0].card_name.toLowerCase() === args.join(" ").toLowerCase()) {
     ClaimConfirm(userID, guildID, card.rows[0].card_id);
-    return embd.ClaimedCard(card.rows[0]);
+    return embd.ClaimedCard(card.rows[0], userID);
   } else
     return `Wrong name`;
 }
@@ -183,7 +199,6 @@ async function ShowList(msg, page){
       temp = await client.query(`SELECT card_name FROM ${saveDb} WHERE card_id = $1`, [idList.rows[i].card_id]);
       cardList.push(temp.rows[0].card_name);
     }
-    console.log(cardList.length);
     return embd.ListEmbed(msg.author, cardList, page, pageSize);
   }
 }
@@ -234,6 +249,7 @@ module.exports = {
   SpawnCard,
   ClaimSpawnedCard,
   Daily,
+  Draw,
   SetSpawningChannel,
   ShowList,
   SetFavourite,
