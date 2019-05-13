@@ -16,8 +16,9 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
 
 //A default time offset for daily time commands
 const timeOffset = 10000;
-const spawnChance = 0.05;
+const spawnChance = 0.01;
 const pageSize = 10;
+const sidedDie = 6;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
@@ -82,7 +83,7 @@ bot.registerCommand("daily", (msg) => {
     addedAmount = Math.round(Math.random() * 100 + 10);
   }
 
-  database.Daily(msg.author.id, addedAmount)
+  database.GainGold(msg.author.id, addedAmount)
     .then(m => bot.createMessage(msg.channel.id, m));
 },
   {
@@ -99,7 +100,17 @@ bot.registerCommand("dailydraw", (msg)=>{
   description: "Draws a card from the aether for you.",
   cooldown: timeOffset,
   cooldownMessage: "You cannot do that right now."
-})
+});
+
+bot.registerCommand("roll", (msg, args)=>{
+  database.DieRoll(msg.author.id, args, sidedDie)
+    .then(r=> bot.createMessage(msg.channel.id, r));
+},
+{
+  argsRequired: true,
+  description: "Gamble your gold away",
+  fullDescription: "Use m.roll <gold to bet> <number from 1-6> to bet on what you will roll for a chance to double your bet!"
+});
 
 //Sets the spawn channel for the guild to the message's channel
 bot.registerCommand("setspawnchannel", (msg) => {

@@ -74,7 +74,7 @@ async function GetProfile(msg) {
 }
 
 //Checks a user and updates their gold
-async function Daily(userID, amount) {
+async function GainGold(userID, amount) {
   await CheckUserExistence(userID);
 
   let m = null;
@@ -240,14 +240,39 @@ async function RemoveCard(userID, args){
   }
 }
 
+//Roll an X sided die
+async function DieRoll(userID, args, sides){
+  let rollNum = Math.ceil(Math.random()*sides);
+  let goldGain = Math.ceil(args[0]*(Math.random()+1.2));
+
+  let profile = await client.query(`SELECT gold FROM ${userDb} WHERE discord_id = $1`, [userID]);
+
+  if(args[1] == null){
+    return `You're missing an argument, do \`m.help roll\` to see what it is.`;
+  }
+
+  if(args[1] > 6 || args[1] < 1){
+    return `${args[1]} doesn't exist on a ${sides} sided die.`;
+  } else if(args[0] > profile.rows[0].gold){
+    return `You tried to bet ${args[0]}, but you only have ${profile.rows[0].gold}.`
+  } else if(args[1] == rollNum){
+    GainGold(userID, goldGain)
+    return `You rolled a ${rollNum} and for your efforts gained ${goldGain} gold.`;
+  } else{
+    GainGold(userID, (args[0]*-1))
+    return `You rolled a ${rollNum} and lost your ${args[0]} gold.`;
+  }
+}
+
 module.exports = {
   GetProfile,
   SpawnCard,
   ClaimSpawnedCard,
-  Daily,
+  GainGold,
   Draw,
   SetSpawningChannel,
   ShowList,
   SetFavourite,
-  RemoveCard
+  RemoveCard,
+  DieRoll
 }
