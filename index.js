@@ -1,6 +1,9 @@
 /*
   THIS DISCORD BOT IS NOT ASSOCIATED WITH 
   WIZARDS OF THE COAST OR MAGIC: THE GATHERING IN ANY WAY
+  Created by: Kapa
+  GitHub: tkapa
+  Website: Kapa.dev
 */
 const auth = require("./auth.json");
 const database = require("./tables.js");
@@ -12,8 +15,9 @@ const bot = new Eris.CommandClient(auth[0].token, {}, {
 });
 
 //A default time offset for daily time commands
-let timeOffset = 10000;
-let spawnChance = 0.01;
+const timeOffset = 10000;
+const spawnChance = 0.05;
+const pageSize = 10;
 
 //Logs what happens when a bot connects to Discord
 bot.on("ready", () => {
@@ -25,6 +29,7 @@ bot.on("messageCreate", (msg) => {
     s = Math.random();
     if (s <= spawnChance) {
       database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
+        .then(r => bot.createMessage(r.channel, r.message))
         .catch(e => console.log(e));
     }
   }
@@ -52,6 +57,7 @@ bot.registerCommand("claim", (msg, args) => {
 },
   {
     description: "Claims the most recent spawned card  in a channel provided you get the name right.",
+    fullDescription: "Use m.claim <card name> to attempt to claim a card that has spawned in the channel."
   });
 
 //Intended to show users their current profile
@@ -81,7 +87,7 @@ bot.registerCommand("daily", (msg) => {
 },
   {
     description: "Grants you some gold to save or spend.",
-    cooldown: 10000,
+    cooldown: timeOffset,
     cooldownMessage: "You cannot do that right now."
   });
 
@@ -91,7 +97,7 @@ bot.registerCommand("dailydraw", (msg)=>{
 },
 {
   description: "Draws a card from the aether for you.",
-  cooldown: 10000,
+  cooldown: timeOffset,
   cooldownMessage: "You cannot do that right now."
 })
 
@@ -102,6 +108,7 @@ bot.registerCommand("setspawnchannel", (msg) => {
 },
   {
     description: "Sets this guild's spawn channel.",
+    fullDescription: "Use m.setspawnchannel to set the channel cards will spawn in for this guild to the one the message was sent in.",
     requirements:{
       permissions:{
         administrator: true
@@ -110,11 +117,12 @@ bot.registerCommand("setspawnchannel", (msg) => {
   });
 
 bot.registerCommand("list", (msg, args)=>{
-  database.ShowList(msg, args)
+  database.ShowList(msg, args, pageSize)
     .then(r => bot.createMessage(msg.channel.id, r));
 },
 {
-  description: "Shows you a list of your cards."
+  description: "Shows you a list of your cards.",
+  fullDescription:`Use m.list <page number> to display a list of ${pageSize} cards that you own.` 
 })
 
 bot.registerCommand("favourite", (msg, args)=>{
@@ -123,7 +131,8 @@ bot.registerCommand("favourite", (msg, args)=>{
 },
 {
   argsRequired: true,
-  description: `Favourites a card at the index specified.`
+  description: `Favourites a card at the index specified.`,
+  fullDescription: `Use m.favourite <card index> to set your favourite card for display on your profile. Card index begins at 0.`
 })
 
 bot.registerCommand("remove", (msg, args)=>{
@@ -132,7 +141,8 @@ bot.registerCommand("remove", (msg, args)=>{
 },
 {
   argsRequired: true,
-  description: `Removes a card at the index specified.`
+  description: `Removes a card at the index specified.`,
+  fullDescription: 'Use m.remove <card index> to delete a car dfrom your inventory. Card index begins at 0.'
 })
 
 //used to test functionality

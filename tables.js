@@ -26,8 +26,6 @@ const userInv = "user_inventory";
 const spawnDb = "spawned_cards"
 const saveDb = "saved_cards";
 
-const pageSize = 10;
-
 //Selecting rows from a table
 function SelectUser(userID) {
   let query = {
@@ -179,7 +177,7 @@ async function ClaimConfirm(userID, guildID, cardID) {
 }
 
 //Retrieves the user's list of cards and displays them
-async function ShowList(msg, page){
+async function ShowList(msg, page, pageSize){
   await CheckUserExistence(msg.author.id);
 
   idList = await client.query(`SELECT card_id FROM ${userInv} WHERE user_id = $1`, [msg.author.id]);
@@ -219,8 +217,6 @@ async function SetFavourite(userID, args){
 
     return `Your favourite card has been set to ${n.rows[0].card_name}!`;
   }
-
-
 }
 
 //Remove a card from the user's database
