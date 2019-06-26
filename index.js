@@ -27,8 +27,7 @@ bot.on("ready", () => {
 //Decides whether or not to spawn a card in the spawning channel
 bot.on("messageCreate", (msg) => {
   if (msg.author.id != 286427596026019841) {
-    s = Math.random();
-    if (s <= spawnChance) {
+    if (Math.random() <= spawnChance) {
       database.SpawnCard(msg.channel.guild.id, msg.channel.id, Date.now() + timeOffset)
         .then(r => bot.createMessage(r.channel, r.message))
         .catch(e => console.log(e));
